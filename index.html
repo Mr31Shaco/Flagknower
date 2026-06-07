@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlagVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: #0a1628;
+  }
+
+  #app {
+    min-height: 100vh;
+    height: 100%;
+    background: linear-gradient(135deg, #0a1628 0%, #0d2137 40%, #0a2a2a 100%);
+    font-family: 'Exo 2', sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #app::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(0,200,180,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,180,200,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,220,200,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,220,200,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0,220,200,0.2), transparent);
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  .login-card {
+    background: rgba(5,30,40,0.85);
+    border: 1px solid rgba(0,220,200,0.3);
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 0 60px rgba(0,200,180,0.15), inset 0 0 40px rgba(0,0,0,0.3);
+    position: relative;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 20px; right: 20px; height: 2px;
+    background: linear-gradient(90deg, transparent, #00dcc8, transparent);
+  }
+
+  .corner { position: absolute; width: 16px; height: 16px; border-color: rgba(0,220,200,0.4); border-style: solid; }
+  .corner-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+  .corner-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+  .corner-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+  .corner-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+  .logo { text-align: center; margin-bottom: 2rem; }
+  .logo-icon { font-size: 48px; display: block; margin-bottom: 0.5rem; filter: drop-shadow(0 0 12px rgba(0,220,200,0.6)); }
+  .logo-title { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900; color: #00dcc8; letter-spacing: 3px; text-shadow: 0 0 20px rgba(0,220,200,0.5); }
+  .logo-sub { font-size: 11px; color: rgba(0,220,200,0.5); letter-spacing: 4px; margin-top: 4px; text-transform: uppercase; }
+
+  .field-label { font-size: 11px; letter-spacing: 2px; color: rgba(0,220,200,0.7); text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .field-wrap { margin-bottom: 1.25rem; }
+
+  .login-input {
+    width: 100%;
+    background: rgba(0,20,30,0.8);
+    border: 1px solid rgba(0,220,200,0.25);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #e0f7f5;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .login-input:focus {
+    border-color: rgba(0,220,200,0.7);
+    box-shadow: 0 0 0 3px rgba(0,220,200,0.1);
+  }
+
+  .login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #00a896, #00dcc8);
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    color: #001a1a;
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 0.5rem;
+  }
+
+  .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,220,200,0.4); }
+  .login-btn:active { transform: translateY(0); }
+
+  .error-msg { color: #ff6b6b; font-size: 12px; text-align: center; margin-top: 12px; min-height: 18px; letter-spacing: 0.5px; }
+
+  /* ── MAIN ── */
+  #main-screen {
+    display: none;
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(0,220,200,0.15);
+    background: rgba(0,15,25,0.6);
+  }
+
+  .top-brand { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 900; color: #00dcc8; letter-spacing: 3px; text-shadow: 0 0 15px rgba(0,220,200,0.5); }
+
+  .user-badge {
+    background: rgba(0,220,200,0.1);
+    border: 1px solid rgba(0,220,200,0.3);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: #00dcc8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255,100,100,0.3);
+    border-radius: 8px;
+    padding: 5px 12px;
+    color: rgba(255,100,100,0.6);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+    font-family: 'Exo 2', sans-serif;
+  }
+
+  .logout-btn:hover { border-color: rgba(255,100,100,0.6); color: #ff6b6b; }
+
+  .content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1.5rem;
+    gap: 2rem;
+  }
+
+  .search-section { width: 100%; max-width: 560px; }
+
+  .search-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(0,220,200,0.6);
+    text-align: center;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .search-wrap { display: flex; gap: 10px; }
+
+  .country-input {
+    flex: 1;
+    background: rgba(0,20,30,0.9);
+    border: 1px solid rgba(0,220,200,0.3);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: #e0f7f5;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s;
+  }
+
+  .country-input:focus { border-color: #00dcc8; box-shadow: 0 0 0 3px rgba(0,220,200,0.12); }
+  .country-input::placeholder { color: rgba(0,220,200,0.3); }
+
+  .search-btn {
+    background: linear-gradient(135deg, #00a896, #00dcc8);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 22px;
+    color: #001a1a;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  .search-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,220,200,0.4); }
+
+  .flag-display {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+  }
+
+  .flag-placeholder { display: flex; flex-direction: column; align-items: center; gap: 12px; opacity: 0.35; }
+  .flag-placeholder-icon { font-size: 56px; }
+  .flag-placeholder-text { font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 3px; color: #00dcc8; }
+
+  .flag-result {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    animation: fadeUp 0.5s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .flag-frame {
+    background: rgba(0,20,30,0.7);
+    border: 1px solid rgba(0,220,200,0.25);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 0 40px rgba(0,220,200,0.1);
+  }
+
+  .flag-frame img { width: 280px; height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: block; }
+
+  .country-name-display {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: #00dcc8;
+    text-align: center;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(0,220,200,0.4);
+  }
+
+  .flag-meta { font-size: 12px; color: rgba(0,220,200,0.5); letter-spacing: 1px; }
+
+  .error-flag { display: none; flex-direction: column; align-items: center; gap: 10px; color: #ff6b6b; text-align: center; font-size: 14px; }
+  .error-flag-icon { font-size: 40px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="grid-bg"></div>
+  <div class="scan-line"></div>
+
+  <!-- LOGIN -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <div class="logo">
+        <span class="logo-icon">🌍</span>
+        <div class="logo-title">FLAGVAULT</div>
+        <div class="logo-sub">World Flag Intelligence</div>
+      </div>
+      <div class="field-wrap">
+        <span class="field-label">Kullanıcı Adı</span>
+        <input class="login-input" type="text" id="username" placeholder="kullanıcı adı..." autocomplete="off" />
+      </div>
+      <div class="field-wrap">
+        <span class="field-label">Şifre</span>
+        <input class="login-input" type="password" id="password" placeholder="••••••••••" />
+      </div>
+      <button class="login-btn" onclick="doLogin()">GİRİŞ YAP</button>
+      <div class="error-msg" id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main-screen">
+    <div class="top-bar">
+      <div class="top-brand">🌍 FLAGVAULT</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="user-badge">⬡ Mr31Shaco</div>
+        <button class="logout-btn" onclick="doLogout()">ÇIKIŞ</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="search-section">
+        <span class="search-label">Ülke adı gir — bayrağı görelim</span>
+        <div class="search-wrap">
+          <input class="country-input" type="text" id="country-input" placeholder="örn: Turkey, Germany, Japan..." />
+          <button class="search-btn" onclick="searchFlag()">BAYRAK GÖR</button>
+        </div>
+      </div>
+      <div class="flag-display">
+        <div class="flag-placeholder" id="flag-placeholder">
+          <div class="flag-placeholder-icon">⚑</div>
+          <div class="flag-placeholder-text">Bir ülke adı gir</div>
+        </div>
+        <div class="flag-result" id="flag-result">
+          <div class="flag-frame">
+            <img id="flag-img" src="" alt="Bayrak" />
+          </div>
+          <div class="country-name-display" id="country-name-display"></div>
+          <div class="flag-meta" id="flag-meta"></div>
+        </div>
+        <div class="error-flag" id="flag-error">
+          <div class="error-flag-icon">⚑</div>
+          <div id="error-text">Ülke bulunamadı. İngilizce tam isim dene.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CREDS = { user: 'Mr31Shaco', pass: 'Feyzullah???...31' };
+
+function doLogin() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  const err = document.getElementById('login-error');
+  if (u === CREDS.user && p === CREDS.pass) {
+    document.getElementById('login-screen').style.display = 'none';
+    const ms = document.getElementById('main-screen');
+    ms.style.display = 'flex';
+  } else {
+    err.textContent = '⚠ Kullanıcı adı veya şifre hatalı.';
+    document.getElementById('password').value = '';
+  }
+}
+
+function doLogout() {
+  document.getElementById('main-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  resetFlag();
+}
+
+const countryMap = {
+  'afghanistan':'af','af':'af','albania':'al','shqipëri':'al','shqiperia':'al',
+  'algeria':'dz','algérie':'dz','cezayir':'dz','andorra':'ad','angola':'ao',
+  'antigua and barbuda':'ag','antigua':'ag','argentina':'ar','armenia':'am','հայաստան':'am',
+  'australia':'au','austria':'at','österreich':'at','azerbaijan':'az','azərbaycan':'az',
+  'bahamas':'bs','the bahamas':'bs','bahrain':'bh','bangladesh':'bd','barbados':'bb',
+  'belarus':'by','беларусь':'by','belgium':'be','belgique':'be','belgië':'be',
+  'belize':'bz','benin':'bj','bhutan':'bt','bolivia':'bo','bosnia':'ba',
+  'bosnia and herzegovina':'ba','bosna':'ba','botswana':'bw','brazil':'br','brasil':'br',
+  'brunei':'bn','brunei darussalam':'bn','bulgaria':'bg','българия':'bg',
+  'burkina faso':'bf','burundi':'bi','cabo verde':'cv','cape verde':'cv',
+  'cambodia':'kh','kampuchea':'kh','cameroon':'cm','cameroun':'cm','canada':'ca',
+  'central african republic':'cf','car':'cf','chad':'td','tchad':'td','chile':'cl',
+  'china':'cn','zhongguo':'cn','prc':'cn','colombia':'co','comoros':'km','comores':'km',
+  'congo':'cg','republic of the congo':'cg','congo republic':'cg',
+  'democratic republic of the congo':'cd','dr congo':'cd','drc':'cd','zaire':'cd',
+  'costa rica':'cr','croatia':'hr','hrvatska':'hr','cuba':'cu','cyprus':'cy','kıbrıs':'cy',
+  'czechia':'cz','czech republic':'cz','česká republika':'cz',
+  'denmark':'dk','danmark':'dk','djibouti':'dj','dominica':'dm',
+  'dominican republic':'do','república dominicana':'do',
+  'ecuador':'ec','egypt':'eg','مصر':'eg','mısır':'eg','el salvador':'sv',
+  'equatorial guinea':'gq','guinea ecuatorial':'gq','eritrea':'er',
+  'estonia':'ee','eesti':'ee','eswatini':'sz','swaziland':'sz','ethiopia':'et',
+  'fiji':'fj','finland':'fi','suomi':'fi','france':'fr','frankreich':'fr','fransa':'fr',
+  'gabon':'ga','gambia':'gm','the gambia':'gm','georgia':'ge','საქართველო':'ge',
+  'germany':'de','deutschland':'de','almanya':'de','ghana':'gh',
+  'greece':'gr','hellas':'gr','ελλάδα':'gr','yunanistan':'gr',
+  'grenada':'gd','guatemala':'gt','guinea':'gn','guinea-bissau':'gw','guyana':'gy',
+  'haiti':'ht','haïti':'ht','honduras':'hn','hungary':'hu','magyarország':'hu','macaristan':'hu',
+  'iceland':'is','ísland':'is','india':'in','bharat':'in','hindistan':'in',
+  'indonesia':'id','iran':'ir','ایران':'ir','iraq':'iq','العراق':'iq',
+  'ireland':'ie','éire':'ie','israel':'il','ישראל':'il',
+  'italy':'it','italia':'it','italya':'it',
+  'jamaica':'jm','japan':'jp','nippon':'jp','nihon':'jp','japonya':'jp',
+  'jordan':'jo','الأردن':'jo',
+  'kazakhstan':'kz','қазақстан':'kz','kenya':'ke','kiribati':'ki',
+  'north korea':'kp','dprk':'kp','south korea':'kr','korea':'kr','republic of korea':'kr','güney kore':'kr',
+  'kosovo':'xk','kuwait':'kw','الكويت':'kw','kyrgyzstan':'kg','кыргызстан':'kg',
+  'laos':'la','lao':'la','latvia':'lv','latvija':'lv',
+  'lebanon':'lb','لبنان':'lb','lesotho':'ls','liberia':'lr','libya':'ly','ليبيا':'ly',
+  'liechtenstein':'li','lithuania':'lt','lietuva':'lt','luxembourg':'lu',
+  'madagascar':'mg','malawi':'mw','malaysia':'my','malezya':'my',
+  'maldives':'mv','mali':'ml','malta':'mt','marshall islands':'mh',
+  'mauritania':'mr','موريتانيا':'mr','mauritius':'mu',
+  'mexico':'mx','méxico':'mx','meksika':'mx',
+  'micronesia':'fm','moldova':'md','monaco':'mc','mongolia':'mn','монгол':'mn',
+  'montenegro':'me','crna gora':'me',
+  'morocco':'ma','maroc':'ma','المغرب':'ma','fas':'ma',
+  'mozambique':'mz','moçambique':'mz','myanmar':'mm','burma':'mm',
+  'namibia':'na','nauru':'nr','nepal':'np',
+  'netherlands':'nl','holland':'nl','nederland':'nl','hollanda':'nl',
+  'new zealand':'nz','yeni zelanda':'nz','nicaragua':'ni','niger':'ne','nigeria':'ng',
+  'north macedonia':'mk','macedonia':'mk','norway':'no','norge':'no','norveç':'no',
+  'oman':'om','عُمان':'om',
+  'pakistan':'pk','پاکستان':'pk','palau':'pw','palestine':'ps','فلسطين':'ps',
+  'panama':'pa','panamá':'pa','papua new guinea':'pg','png':'pg',
+  'paraguay':'py','peru':'pe','perú':'pe',
+  'philippines':'ph','pilipinas':'ph','filipinler':'ph',
+  'poland':'pl','polska':'pl','polonya':'pl','portugal':'pt','portekiz':'pt',
+  'qatar':'qa','قطر':'qa','katar':'qa',
+  'romania':'ro','românia':'ro','romanya':'ro','russia':'ru','россия':'ru','rusya':'ru','rwanda':'rw',
+  'saint kitts and nevis':'kn','saint lucia':'lc','saint vincent and the grenadines':'vc',
+  'samoa':'ws','san marino':'sm','sao tome and principe':'st','são tomé and príncipe':'st',
+  'saudi arabia':'sa','السعودية':'sa','suudi arabistan':'sa',
+  'senegal':'sn','sénégal':'sn','serbia':'rs','srbija':'rs','sırbistan':'rs',
+  'seychelles':'sc','sierra leone':'sl','singapore':'sg','singapur':'sg',
+  'slovakia':'sk','slovensko':'sk','slovenia':'si','slovenija':'si',
+  'solomon islands':'sb','somalia':'so','الصومال':'so',
+  'south africa':'za','güney afrika':'za','south sudan':'ss',
+  'spain':'es','españa':'es','espanya':'es','ispanya':'es',
+  'sri lanka':'lk','ceylon':'lk','sudan':'sd','السودان':'sd','suriname':'sr',
+  'sweden':'se','sverige':'se','isveç':'se','isvec':'se',
+  'switzerland':'ch','schweiz':'ch','suisse':'ch','svizzera':'ch','isviçre':'ch',
+  'syria':'sy','سوريا':'sy','suriye':'sy',
+  'taiwan':'tw','republic of china':'tw','tajikistan':'tj','тоҷикистон':'tj',
+  'tanzania':'tz','thailand':'th','tayland':'th',
+  'timor-leste':'tl','east timor':'tl','togo':'tg','tonga':'to',
+  'trinidad and tobago':'tt','tunisia':'tn','تونس':'tn','tunus':'tn',
+  'turkey':'tr','türkiye':'tr','turkiye':'tr',
+  'turkmenistan':'tm','türkmenistan':'tm','tuvalu':'tv',
+  'uganda':'ug','ukraine':'ua','україна':'ua','ukrayna':'ua',
+  'united arab emirates':'ae','uae':'ae','emirates':'ae','bae':'ae',
+  'united kingdom':'gb','uk':'gb','england':'gb','britain':'gb','great britain':'gb',
+  'united states':'us','usa':'us','america':'us','us':'us','united states of america':'us',
+  'uruguay':'uy','uzbekistan':'uz','oʻzbekiston':'uz',
+  'vanuatu':'vu','vatican':'va','vatican city':'va','holy see':'va','venezuela':'ve',
+  'vietnam':'vn','việt nam':'vn','viet nam':'vn',
+  'yemen':'ye','اليمن':'ye',
+  'zambia':'zm','zimbabwe':'zw',
+  'hong kong':'hk','hong kong sar':'hk','macau':'mo','macao':'mo',
+  'puerto rico':'pr','greenland':'gl','faroe islands':'fo',
+  'gibraltar':'gi','guam':'gu','aruba':'aw','curacao':'cw','curaçao':'cw'
+};
+
+function searchFlag() {
+  const raw = document.getElementById('country-input').value.trim();
+  if (!raw) return;
+  const code = countryMap[raw.toLowerCase()];
+  document.getElementById('flag-placeholder').style.display = 'none';
+  document.getElementById('flag-result').style.display = 'none';
+  document.getElementById('flag-error').style.display = 'none';
+  if (code) {
+    const img = document.getElementById('flag-img');
+    img.src = 'https://flagcdn.com/w320/' + code + '.png';
+    img.onerror = () => {
+      document.getElementById('flag-result').style.display = 'none';
+      document.getElementById('flag-error').style.display = 'flex';
+    };
+    document.getElementById('country-name-display').textContent = raw.toUpperCase();
+    document.getElementById('flag-meta').textContent = 'Ülke Kodu: ' + code.toUpperCase();
+    document.getElementById('flag-result').style.display = 'flex';
+  } else {
+    document.getElementById('flag-error').style.display = 'flex';
+    document.getElementById('error-text').textContent = '"' + raw + '" bulunamadı. İngilizce tam isim dene. (örn: Turkey, Germany)';
+  }
+}
+
+function resetFlag() {
+  document.getElementById('country-input').value = '';
+  document.getElementById('flag-placeholder').style.display = 'flex';
+  document.getElementById('flag-result').style.display = 'none';
+  document.getElementById('flag-error').style.display = 'none';
+}
+
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('main-screen').style.display === 'flex') searchFlag();
+});
+</script>
+</body>
+</html>
